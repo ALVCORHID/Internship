@@ -1,0 +1,23 @@
+{
+  "declining_rate": 0.3748252018015064,
+  "mean_final_score": 43.51712100933999,
+  "high_confidence_share": 0.20000771523083005,
+  "feature_means": {
+    "impressions_90d": 5725.70449701517,
+    "clicks_90d": 17.88870779527635,
+    "ctr_90d": 0.2774653769454278,
+    "avg_position_90d": 13.642364435520259,
+    "sessions_90d": 16.852774107685335,
+    "pageviews_90d": 21.59657057989604,
+    "engaged_sessions_90d": 0.5681206662101822,
+    "organic_sessions_90d": 10.903289581545168,
+    "impressions_last30": 2681.25230733622,
+    "impressions_first60": 3044.45218967895,
+    "momentum_pct": 411.26659728068995,
+    "active_days_90d": 65.43890983788371,
+    "has_ga4_data": 0.7509330607285106,
+    "has_momentum": 0.8466308551368972
+  },
+  "n_rows": 103691,
+  "n_clients": 42
+}
