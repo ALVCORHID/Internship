@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Which pages are about to lose search visibility? — Álvaro Correa Hidalgo</title>
+<meta name="description" content="A client-grouped ranking model that scores 104k pages on real FlyRank search data by their risk of a 30%+ search-impression drop next month — 2.6x better than the hand rule at the top of the review queue.">
+<style>
+  :root{
+    --bg:#fbfbf9; --fg:#1c2126; --muted:#5a6470; --line:#e4e2db;
+    --accent:#2f5d84; --accent-soft:#eaf1f7; --card:#ffffff; --warn:#8a5a1a; --warn-soft:#fbf1e2;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font:400 18px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:760px;margin:0 auto;padding:0 22px 96px}
+  header{padding:64px 0 26px;border-bottom:1px solid var(--line);margin-bottom:14px}
+  .kicker{font:600 13px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  h1{font-size:2.15rem;line-height:1.18;margin:0 0 18px;letter-spacing:-.02em;font-weight:700}
+  .byline{color:var(--muted);font-size:.95rem;margin:0}
+  .byline a{color:var(--muted)}
+  h2{font-size:1.34rem;margin:52px 0 14px;letter-spacing:-.01em;font-weight:700;
+    padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:1.02rem;margin:28px 0 8px;font-weight:700}
+  p{margin:0 0 16px}
+  a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:2px}
+  strong{font-weight:650}
+  ul,ol{margin:0 0 16px;padding-left:22px}
+  li{margin:0 0 7px}
+  code{font-family:var(--mono);font-size:.86em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+  pre{background:#1e2530;color:#e8eef5;padding:16px 18px;border-radius:8px;overflow-x:auto;font-size:.82rem;line-height:1.55;margin:0 0 18px}
+  pre code{background:none;padding:0;color:inherit;font-size:inherit}
+  .abstract{background:var(--accent-soft);border:1px solid #d4e2ee;border-radius:10px;padding:22px 24px;margin:6px 0 8px}
+  .abstract p:last-child{margin-bottom:0}
+  figure{margin:24px 0;padding:0}
+  figure img{width:100%;height:auto;display:block;background:#fff;border:1px solid var(--line);border-radius:8px}
+  figcaption{font-size:.87rem;color:var(--muted);margin-top:9px;line-height:1.5}
+  .tablewrap{overflow-x:auto;margin:0 0 12px}
+  table{border-collapse:collapse;width:100%;font-size:.92rem}
+  th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line)}
+  th{font-weight:650;background:#f4f3ef}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .note{background:var(--warn-soft);border-left:3px solid var(--warn);padding:12px 16px;border-radius:0 6px 6px 0;font-size:.94rem;margin:0 0 18px}
+  .note strong{color:var(--warn)}
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem}
+  .toc{font-size:.9rem;color:var(--muted);margin:20px 0 0}
+  .toc a{color:var(--muted);margin-right:14px;display:inline-block;white-space:nowrap}
+  @media(max-width:560px){
+    header{padding-top:44px}
+    h1{font-size:1.7rem}
+    body{font-size:17px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p class="kicker">FlyRank ML Internship · Capstone</p>
+  <h1>Which pages are about to lose search visibility?</h1>
+  <p class="byline">
+    Álvaro Correa Hidalgo · 2026 ·
+    <a href="https://github.com/ALVCORHID/Internship">repo &amp; notebooks</a> ·
+    Freestyle lane — search-visibility decline-risk scoring
+  </p>
+  <p class="toc">
+    <a href="#abstract">Abstract</a><a href="#intro">Problem</a><a href="#data">Data</a><a href="#method">Methodology</a><a href="#results">Results</a><a href="#limits">Limitations</a><a href="#recs">Recommendations</a><a href="#repro">Reproducibility</a><a href="#ack">Credit</a>
+  </p>
+</header>
+
+<section id="abstract">
+  <div class="abstract">
+    <p><strong>Abstract.</strong> <em>Which of a content team's pages should a human review
+    first, before they quietly lose search traffic?</em> I built a modelling table of
+    <strong>103,691 pages across 42 clients</strong> from the FlyRank warehouse release — a
+    90-day behaviour window and a label that flags a <strong>≥30% search-impression drop in
+    the following month</strong>, with every label-derived column removed. Three sklearn
+    models were scored as rankers against a transparent hand-rule baseline, all on a
+    <strong>client-grouped</strong> holdout (no client on both sides of the split). Logistic
+    regression reaches <strong>Precision@50 = 0.74 versus the baseline's 0.28 — a 2.6×
+    lift</strong> at a realistic weekly review batch size, against a test base rate of 0.301.
+    The output is a ranked, reason-coded review queue for editors: decision-support for a
+    human, never an automated action.</p>
+  </div>
+</section>
+
+<section id="intro">
+  <h2>1. The problem this supports</h2>
+  <p>A FlyRank content editor has a fixed number of hours each week and tens of thousands of
+  client pages. Some are slowly losing impressions in Google Search; most are fine. The
+  decision this work supports is narrow and concrete: <strong>which pages go to the top of
+  the review queue.</strong></p>
+  <p>The unit is one page for one client. The output is a ranked list where each row carries
+  <em>reason codes</em> (why it's here) and a suggested lane — <em>refresh</em>,
+  <em>review</em>, or <em>monitor</em>. A wrong call is a prioritisation cost: a false
+  positive burns a review slot on a healthy page; a false negative lets a real decline run
+  another week unseen. Nothing here edits or unpublishes content.</p>
+  <p>Why model it at all? A transparent rule already sorts the pages (the Week-4 baseline
+  below). A model earns its place only if it puts <em>better</em> pages at the top of the
+  same queue, measured on the same data. It does — by about 2.6× — and Section&nbsp;4 shows
+  the honest table.</p>
+</section>
+
+<section id="data">
+  <h2>2. Data</h2>
+  <p><strong>Source.</strong> The FlyRank ML Internship warehouse release
+  (<code>hf://datasets/FlyRank/internship-warehouse</code>), aggregated with the
+  DuckDB-over-Hugging-Face workflow from the starter's notebook 03 and
+  <code>work/scripts/build_dataset.py</code>. One row per
+  <code>(client_hash_id, content_hash_id)</code> pair.</p>
+  <p><strong>Windows.</strong> A 90-day feature window (Jan–Mar 2026 in this build); the
+  label window is the following 30 days (April 2026). <strong>Build size: 103,691 rows,
+  42 clients.</strong></p>
+  <p><strong>What I excluded, and why.</strong> This list is the direct output of the
+  leakage hunt (ML-04 / ML-05), re-verified on the final feature set:</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Excluded column</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td><code>impressions_mar</code></td><td>numerator of the label formula — direct leakage</td></tr>
+      <tr><td><code>impressions_apr</code></td><td>the label window itself — direct leakage</td></tr>
+      <tr><td><code>pct_change</code></td><td>computed from the two above — direct leakage</td></tr>
+      <tr><td><code>trend_direction</code></td><td>derived from <code>pct_change</code> — direct leakage</td></tr>
+      <tr><td><code>trend_pct</code></td><td>percentage form of <code>pct_change</code> — direct leakage</td></tr>
+      <tr><td><code>client_hash_id</code> / <code>content_hash_id</code></td><td>pseudonymous IDs — grouping and splitting only, never a feature</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><strong>Public-safe by construction.</strong> The hash IDs have no reversible link to
+  real client names, domains, URLs, page titles, or search queries anywhere in the dataset.
+  No client-identifying value appears in this paper or the repo's <code>work/</code> folder.</p>
+</section>
+
+<section id="method">
+  <h2>3. Methodology</h2>
+  <h3>The label</h3>
+  <p><code>is_declining_label = 1</code> when GSC impressions dropped ≥30% from the end of
+  the feature window into the 30-day label window. Built strictly from the label window; a
+  measurable proxy for "worth an editorial look", not a content-quality verdict.</p>
+  <h3>Features (14, feature-window only)</h3>
+  <p><code>impressions_90d</code>, <code>clicks_90d</code>, <code>ctr_90d</code>,
+  <code>avg_position_90d</code>, <code>sessions_90d</code>, <code>pageviews_90d</code>,
+  <code>engaged_sessions_90d</code>, <code>organic_sessions_90d</code>,
+  <code>impressions_last30</code>, <code>impressions_first60</code>,
+  <code>momentum_pct</code>, <code>active_days_90d</code>, <code>has_ga4_data</code>,
+  <code>has_momentum</code>. Structural-missing flags (<code>has_ga4_data</code>,
+  <code>has_momentum</code>) are treated as "not measured", not zero — <code>has_momentum
+  == 0</code> rows get a <em>neutral</em> risk score in the baseline, not a "safe" one.</p>
+  <h3>Baseline — a rule you can read</h3>
+  <p>A hand-written score with no fitted weights:
+  <code>visibility_score × risk_composite</code>. Visibility (percentile rank of
+  <code>log1p(impressions_90d)</code>) <em>gates</em> the score — an invisible page scores
+  near zero however bad its other numbers. The risk composite is a 0.45 / 0.30 / 0.25 blend
+  of in-window momentum, rank position, and visibility consistency, with six plain reason
+  codes.</p>
+  <div class="note"><strong>An honest note on the baseline.</strong> The signal audit
+  (ML-06) found two of its three risk signals point the wrong way on this data —
+  <code>avg_position_90d</code> and <code>active_days_90d</code> run <strong>opposite</strong>
+  to the rule's assumption, and <code>momentum_pct</code> alone tests as <strong>no
+  effect</strong>. Most of the baseline's modest lift comes from the visibility gate, not
+  from the risk signals being well-aimed. That is exactly what the model is asked to beat.</div>
+  <h3>Models</h3>
+  <p>Logistic regression (scaled, balanced), decision tree (<code>max_depth=5</code>), random
+  forest (<code>n_estimators=200</code>, balanced). <code>RANDOM_STATE = 42</code>. Each is
+  scored as a ranker via <code>predict_proba</code>.</p>
+  <h3>Validation design</h3>
+  <p><strong>Client-grouped 80/20 holdout.</strong> ~20% of <em>clients</em> (8 of 42) are
+  held out entirely — never rows. Verified train/test client overlap = 0. A row-random split
+  lets a client sit on both sides and the model memorises the client, not the signal;
+  Section&nbsp;4 shows how much that split would have flattered the numbers.</p>
+  <h3>Leakage checks</h3>
+  <p>Direct excluded-column scan of the scoring code, a &gt;0.8 label-correlation check on
+  every feature (top correlation: <code>active_days_90d</code> at 0.18 — nothing suspicious),
+  and a split-level client-overlap check. Run in ML-05, re-run on the final feature set in
+  ML-09.</p>
+</section>
+
+<section id="results">
+  <h2>4. Results</h2>
+  <p>Model versus baseline, <strong>same client-grouped split, same metric</strong>. Test
+  base rate (declining share) = <strong>0.301</strong>.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Model</th><th class="num">P@10</th><th class="num">P@25</th><th class="num">P@50</th><th class="num">Avg Prec</th><th class="num">ROC AUC</th></tr></thead>
+    <tbody>
+      <tr><td>baseline (Week-4 rule)</td><td class="num">0.40</td><td class="num">0.28</td><td class="num">0.28</td><td class="num">0.290</td><td class="num">0.500</td></tr>
+      <tr><td><strong>logistic_regression</strong></td><td class="num">0.50</td><td class="num">0.60</td><td class="num"><strong>0.74</strong></td><td class="num">0.419</td><td class="num">0.629</td></tr>
+      <tr><td>decision_tree</td><td class="num">0.70</td><td class="num">0.60</td><td class="num">0.58</td><td class="num">0.394</td><td class="num">0.640</td></tr>
+      <tr><td>random_forest</td><td class="num">1.00</td><td class="num">0.88</td><td class="num">0.72</td><td class="num">0.407</td><td class="num">0.643</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <figure>
+    <img src="assets/model_vs_baseline_precision.svg" alt="Bar chart of Precision@50: baseline 0.28, logistic regression 0.74, decision tree 0.58, random forest 0.72">
+    <figcaption>At a 50-page weekly review batch, the model finds declining pages roughly
+    2.6× more often than the hand rule. The baseline's 0.28 is barely above the 0.301 base
+    rate — the rule is close to random at this depth.</figcaption>
+  </figure>
+  <p><strong>Headline:</strong> logistic regression reaches <strong>Precision@50 = 0.74,
+  a 2.64× lift</strong> over the baseline. All three models beat the baseline on every metric.
+  Random forest actually leads at the very top of the queue (P@10 = 1.00); logistic
+  regression is the operating model because P@50 matches a realistic batch and it is the most
+  inspectable.</p>
+  <h3>Does the gap survive a weaker split?</h3>
+  <p>Re-running everything on a naive row-random split (38 clients overlapping train/test)
+  inflates Average Precision and ROC AUC across the board (LR AvgPrec 0.54 vs 0.42) and lifts
+  random forest's P@50 from 0.72 to 0.82. The client-grouped numbers above are the
+  conservative ones; the model-beats-baseline ordering holds on both splits.</p>
+  <h3>Error analysis</h3>
+  <ul>
+    <li>Logistic-regression weight goes to <code>active_days_90d</code>, <code>ctr_90d</code>,
+    and <code>clicks_90d</code> — behavioural consistency and engagement, not raw impression
+    count.</li>
+    <li>Accuracy is worst in the mid-rank band (<code>avg_position_90d</code> ≈ 6–13,
+    accuracy ~0.48) — consistent with rank running backwards from intuition here.</li>
+    <li>A clear miss: a page with a huge in-window impression spike
+    (<code>momentum_pct</code> ≈ 6750) is rated 0.80 risk but did not decline. Spike-driven
+    momentum is a known weak spot.</li>
+    <li>ROC AUC 0.629 — real signal, not suspiciously perfect.</li>
+  </ul>
+</section>
+
+<section id="limits">
+  <h2>5. Limitations &amp; honest framing</h2>
+  <ul>
+    <li><strong>Proxy label.</strong> A ≥30% impression drop is a measurable proxy for
+    editorial risk — seasonality, SERP-layout changes, and algorithm updates all move
+    impressions independently of content quality.</li>
+    <li><strong>One time window.</strong> A single feature/label window pair from one
+    snapshot. Results may not carry to a different season or after a Google update.</li>
+    <li><strong>Cross-sectional, not causal.</strong> Every number is an observed association
+    on a client-grouped holdout — never a claim that refreshing a specific page recovers its
+    traffic. No controlled experiment backs that stronger claim.</li>
+    <li><strong>Client coverage varies.</strong> The <code>has_ga4_data</code> flag test
+    found a higher decline rate without GA4 (44.2% vs 35.3%), but a per-client breakdown
+    traced the gap to one outlier client — so the flag is kept as structural metadata and
+    excluded as a raw signal, not trusted.</li>
+    <li><strong>Split-sensitive.</strong> The model-over-baseline gap depends on the exact
+    split; a naive split would have overstated it.</li>
+    <li><strong>Decision-support only.</strong> Every recommendation needs human review
+    before any action. Nothing here proves what Google's algorithm does.</li>
+  </ul>
+</section>
+
+<section id="recs">
+  <h2>6. Ranked recommendations</h2>
+  <p>The action queue an editor opens tomorrow (from
+  <code>work/outputs/content_action_playbook.csv</code>), 103,691 pages scored into seven
+  archetypes:</p>
+  <figure>
+    <img src="assets/archetype_mix.svg" alt="Bar chart of pages per archetype: Low Visibility 51830, Visible but Under-converting 22932, Model-flagged Opportunity 17998, Stable/General Watch 5233, Inconsistent Visibility 2862, Model-confirmed Decline 2052, Declining and Under-ranked 784">
+    <figcaption>Most pages are low-visibility monitor-only. The active review work
+    concentrates in three archetypes.</figcaption>
+  </figure>
+  <ol>
+    <li><strong>Refresh first:</strong> <em>Declining &amp; Under-ranked</em> (784) and
+    <em>Model-confirmed Decline</em> (2,052) — the transparent rule <em>and</em> the model
+    agree these are highest-risk.</li>
+    <li><strong>Review for capture:</strong> <em>Visible but Under-converting</em> (22,932) —
+    already earning impressions, so the fix is metadata / CTR, not visibility.</li>
+    <li><strong>Lighter-touch review:</strong> <em>Model-flagged Opportunity</em> (17,998) —
+    the model sees risk the rule doesn't, with less corroboration.</li>
+    <li><strong>Monitor only:</strong> <em>Stable / General Watch</em> and
+    <em>Low Visibility</em> — kept out of this cycle's active queue.</li>
+  </ol>
+  <figure>
+    <img src="assets/confidence_mix.svg" alt="Bar chart of confidence tiers: low 51845, medium 31107, high 20739">
+    <figcaption>Confidence = how many independent signals agree. The 51,845 low-confidence
+    pages ride on visibility alone — do not schedule dedicated editorial time from that tier.</figcaption>
+  </figure>
+  <p>Each tier ships with a human-review checklist and a <strong>no-go list</strong>: never
+  auto-publish, auto-delete, or auto-rewrite from this queue; never treat the score as proof
+  an edit recovers traffic; never use it for personnel, vendor, or budget decisions.</p>
+</section>
+
+<section id="repro">
+  <h2>7. Reproducibility</h2>
+  <p>Notebooks: <a href="https://github.com/ALVCORHID/Internship/tree/main/work/notebooks"><code>work/notebooks/</code></a>
+  (w01 → capstone, run in order). Full write-up:
+  <a href="https://github.com/ALVCORHID/Internship/blob/main/work/capstone_report.md"><code>work/capstone_report.md</code></a>.</p>
+<pre><code>git clone https://github.com/ALVCORHID/Internship.git
+cd Internship
+pip install -r requirements.txt
+pip install duckdb huggingface_hub
+
+export HF_TOKEN=...            # request dataset access first
+python work/scripts/build_dataset.py            # writes work/outputs/dataset.csv
+
+jupyter nbconvert --to notebook --execute --inplace work/notebooks/*.ipynb</code></pre>
+  <p>Seeds: <code>RANDOM_STATE = 42</code> everywhere. Environment:
+  <code>requirements.txt</code> + Python 3.11/3.12. Random-forest Precision@50 is
+  library-version sensitive (±0.03); the ~2.6× lift over baseline is the stable claim.
+  Committed run receipts: <code>work/outputs/playbook_summary.json</code>,
+  <code>work/outputs/monitoring_snapshot.json</code> (large CSVs are gitignored and
+  regenerate on every run).</p>
+</section>
+
+<section id="ack">
+  <h2>8. Acknowledgments &amp; data credit</h2>
+  <p>Built on the <strong>FlyRank ML Internship dataset</strong> —
+  <a href="https://flyrank.ai">flyrank.ai</a>. Crediting the data source is standard research
+  practice and tells the reader this is real search data, not a toy set. Track leads: Mirza
+  Ašćerić (ML), Hole (data engineering). Code under MIT; data under the internship's
+  <code>DATA_USE.md</code>.</p>
+</section>
+
+<footer>
+  <p>FlyRank ML Internship capstone · Álvaro Correa Hidalgo · 2026 ·
+  <a href="https://github.com/ALVCORHID/Internship">github.com/ALVCORHID/Internship</a></p>
+  <p>Every claim on this page is observed / measured / directional / decision-support. Base
+  rate (0.301) is reported next to every Precision@K. No causal claims; no client-identifying
+  detail.</p>
+</footer>
+</div>
+</body>
+</html>

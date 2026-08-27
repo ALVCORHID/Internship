@@ -40,15 +40,17 @@ Tick them off as you go; this table is the map of your work:
 
 | Notebook | Assignment | Status |
 |---|---|---|
-| `notebooks/w01_research_question.ipynb` | ML-02 | ☐ |
-| `notebooks/w02_ml_task_framing.ipynb` | ML-03 | ☐ |
-| `notebooks/w03_data_contract.ipynb` | ML-04 | ☐ |
-| `notebooks/w03_feature_leakage_check.ipynb` | ML-05 | ☐ |
-| `notebooks/w04_signal_audit.ipynb` | ML-06 | ☐ |
-| `notebooks/w04_baseline_score.ipynb` | ML-07 | ☐ |
-| `notebooks/w05_model.ipynb` | ML-08 | ☐ |
-| `notebooks/w06_validation_audit.ipynb` | ML-09 | ☐ |
-| `notebooks/w07_action_playbook.ipynb` | ML-10 | ☐ |
-| `notebooks/capstone.ipynb` | ML-11 (the paper mirrors it) | ☐ |
+| `notebooks/w01_research_question.ipynb` | ML-02 | ☑ run against real data |
+| `notebooks/w02_ml_task_framing.ipynb` | ML-03 | ☑ run against real data |
+| `notebooks/w03_data_contract.ipynb` | ML-04 | ☑ run against real data |
+| `notebooks/w03_feature_leakage_check.ipynb` | ML-05 (archived) | ☑ run against real data |
+| `notebooks/w04_signal_audit.ipynb` | ML-06 (archived) | ☑ run against real data |
+| `notebooks/w04_baseline_score.ipynb` | ML-07 | ☑ run against real data |
+| `notebooks/w05_model.ipynb` | ML-08 | ☑ run against real data |
+| `notebooks/w06_validation_audit.ipynb` | ML-09 | ☑ run against real data |
+| `notebooks/w07_action_playbook.ipynb` | ML-10 | ☑ run against real data |
+| `notebooks/capstone.ipynb` | ML-11 (the paper mirrors it) | ☑ run against real data |
 
-When your paper is deployed, put its exact URL in `../submission/paper_url.txt` (one line).
+Capstone report: [`capstone_report.md`](capstone_report.md). Deployed paper:
+`https://alvcorhid.github.io/Internship/` (source in [`../docs/`](../docs/); URL recorded in
+[`../submission/paper_url.txt`](../submission/paper_url.txt)).
