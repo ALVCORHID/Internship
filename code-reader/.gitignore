@@ -1,0 +1,4 @@
+# Generated output, not part of the project source
+codigos_leidos.xlsx
+*.xlsx
+.pytest_cache/
