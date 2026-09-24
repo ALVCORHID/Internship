@@ -1,14 +1,16 @@
 """Lector de codigos de barras/QR con sincronizacion a Excel.
 
 Uso:
-    python reader.py                      # abre la webcam por defecto (indice 0)
-    python reader.py --excel salida.xlsx  # cambia el archivo de salida
-    python reader.py --camera 1           # usa otra camara
-    python reader.py --no-window          # modo headless (sin ventana de video)
+    python reader.py                                       # webcam local, indice 0
+    python reader.py --excel salida.xlsx                   # cambia el archivo de salida
+    python reader.py --source 1                             # usa otra camara local
+    python reader.py --source http://192.168.0.10:8080/video  # celular como camara IP (app IP Webcam)
+    python reader.py --no-window                            # modo headless (sin ventana de video)
 
 Cada codigo nuevo detectado se agrega como fila al Excel y el archivo se
 guarda inmediatamente (sincronizacion en caliente). Un codigo ya visto
-(mismo valor) no se vuelve a agregar.
+(mismo valor, ya sea de una corrida anterior o de esta misma) no se vuelve
+a agregar; se avisa por consola que es un duplicado.
 """
 
 from __future__ import annotations
@@ -16,7 +18,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Union
 
 import cv2
 from openpyxl import Workbook, load_workbook
@@ -65,15 +67,17 @@ def draw_detections(frame, detections: Iterable[Decoded]) -> None:
         cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
 
-def run(excel_path: Path, camera_index: int = 0, show_window: bool = True) -> None:
+def run(excel_path: Path, source: Union[int, str] = 0, show_window: bool = True) -> None:
     wb, ws = load_or_create_workbook(excel_path)
     seen = existing_codes(ws)
+    notified: set[str] = set()
 
-    cap = cv2.VideoCapture(camera_index)
+    cap = cv2.VideoCapture(source)
     if not cap.isOpened():
-        raise RuntimeError(f"No se pudo abrir la camara {camera_index}")
+        raise RuntimeError(f"No se pudo abrir la fuente de video {source!r}")
 
-    print("Lector de codigos iniciado. Presiona 'q' en la ventana de video para salir (Ctrl+C en modo --no-window).")
+    print(f"Lector de codigos iniciado (fuente: {source}). {len(seen)} codigo(s) ya registrados en el Excel.")
+    print("Presiona 'q' en la ventana de video para salir (Ctrl+C en modo --no-window).")
     try:
         while True:
             ok, frame = cap.read()
@@ -86,6 +90,10 @@ def run(excel_path: Path, camera_index: int = 0, show_window: bool = True) -> No
                 if sync_code(ws, code, d.type, seen):
                     wb.save(excel_path)
                     print(f"Nuevo codigo guardado: {code} ({d.type})")
+                    notified.add(code)
+                elif code not in notified:
+                    print(f"Codigo duplicado, ya estaba registrado (no se vuelve a guardar): {code} ({d.type})")
+                    notified.add(code)
 
             if show_window:
                 draw_detections(frame, detections)
@@ -105,11 +113,24 @@ def run(excel_path: Path, camera_index: int = 0, show_window: bool = True) -> No
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--excel", type=Path, default=DEFAULT_EXCEL_PATH, help="Ruta al archivo Excel de salida (default: codigos_leidos.xlsx)")
-    parser.add_argument("--camera", type=int, default=0, help="Indice de la camara a usar (default: 0)")
+    parser.add_argument(
+        "--source",
+        default="0",
+        help=(
+            "Fuente de video: indice de camara local (0, 1, ...) o URL de stream "
+            "(ej: http://192.168.0.10:8080/video para la app IP Webcam en Android, "
+            "usando tu celular como camara). Default: 0"
+        ),
+    )
     parser.add_argument("--no-window", action="store_true", help="No mostrar la ventana de video (modo headless)")
     args = parser.parse_args()
 
-    run(args.excel, camera_index=args.camera, show_window=not args.no_window)
+    try:
+        source: Union[int, str] = int(args.source)
+    except ValueError:
+        source = args.source
+
+    run(args.excel, source=source, show_window=not args.no_window)
 
 
 if __name__ == "__main__":
